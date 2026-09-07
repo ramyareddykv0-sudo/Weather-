@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Dashboard - Thiranex</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+.card{background:white;border-radius:20px;padding:30px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+h1{text-align:center;color:#333;margin-bottom:5px;font-size:24px}
+.sub{text-align:center;color:#888;font-size:13px;margin-bottom:20px}
+.search{display:flex;gap:10px;margin-bottom:20px}
+.search input{flex:1;padding:14px 18px;border:2px solid #eee;border-radius:12px;font-size:15px;outline:none}
+.search button{background:#667eea;color:white;border:none;padding:14px 20px;border-radius:12px;cursor:pointer;font-weight:bold}
+.weather{text-align:center}
+.temp{font-size:64px;font-weight:800;color:#333;margin:10px 0}
+.city{font-size:22px;font-weight:600;color:#444}
+.desc{color:#667eea;font-size:16px;margin:5px 0 20px}
+.details{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.box{background:#f7f7ff;padding:15px;border-radius:12px}
+.box small{color:#888;display:block;font-size:12px}
+.box b{font-size:18px;color:#333}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>⛅ Weather Dashboard</h1>
+<p class="sub">Thiranex Task 4 - Live Weather</p>
+<div class="search">
+<input id="cityInput" type="text" placeholder="Enter city e.g. Gulbarga">
+<button onclick="getWeather()">Search</button>
+</div>
+<div class="weather">
+<div class="temp" id="temp">--°C</div>
+<div class="city" id="cityName">--</div>
+<div class="desc" id="desc">--</div>
+<div class="details">
+<div class="box"><small>Humidity</small><b id="humidity">--%</b></div>
+<div class="box"><small>Wind</small><b id="wind">-- km/h</b></div>
+<div class="box"><small>Feels Like</small><b id="feels">--°C</b></div>
+<div class="box"><small>Condition</small><b id="cond">--</b></div>
+</div>
+</div>
+</div>
+<script>
+async function getWeather(){
+ const city=document.getElementById('cityInput').value.trim();
+ if(!city){alert('Enter city');return}
+ try{
+  const geoRes=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`);
+  const geoData=await geoRes.json();
+  if(!geoData.results) throw new Error('City not found');
+  const {latitude,longitude,name,country}=geoData.results[0];
+  const wRes=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`);
+  const wData=await wRes.json();
+  const curr=wData.current;
+  const codeMap={0:'Clear Sky',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',51:'Light Drizzle',61:'Slight Rain',95:'Thunderstorm'};
+  const desc=codeMap[curr.weather_code]||'Cloudy';
+  document.getElementById('temp').textContent=Math.round(curr.temperature_2m)+'°C';
+  document.getElementById('cityName').textContent=name+', '+country;
+  document.getElementById('desc').textContent=desc;
+  document.getElementById('humidity').textContent=curr.relative_humidity_2m+'%';
+  document.getElementById('wind').textContent=curr.wind_speed_10m+' km/h';
+  document.getElementById('feels').textContent=Math.round(curr.apparent_temperature)+'°C';
+  document.getElementById('cond').textContent=desc;
+ }catch(e){alert(e.message);}
+}
+window.onload=()=>{document.getElementById('cityInput').value='Gulbarga';getWeather();};
+</script>
+</body>
+</html>
